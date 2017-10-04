@@ -1,0 +1,19 @@
+opam-version: "1.2"
+maintainer: "ilias.gar@gmail.com"
+authors: ["Ilias Garnier"]
+homepage: "https://github.com/igarnier/k-means"
+bug-reports: "https://github.com/igarnier/k-means/issues"
+dev-repo: "git+https://github.com/igarnier/k-means.git"
+license: "Apache-2.0"
+build: [
+  ["jbuilder" "build" "-p" name "-j" jobs]
+]
+depends: [
+  "jbuilder"                {build & >= "1.0+beta8"}
+  "batteries"
+  "parmap"
+]
+available: [ ocaml-version >= "4.04.1" ]
+descr: "
+k-means clustering in OCaml
+"

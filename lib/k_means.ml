@@ -34,7 +34,7 @@ struct
   
   let closest centroids elt =
     let m = ref 0  in
-    let d = ref 0. in
+    let d = ref max_float in
     for i = 0 to Array.length centroids - 1 do
       let dist = E.dist elt centroids.(i) in
       if dist < !d then
@@ -55,19 +55,19 @@ struct
   let compute_centroids classes =
     Array.map E.mean classes
 
-  let rec iterate centroids elements =
+  let rec iterate centroids elements threshold =
     let classes    = compute_classes centroids elements in
     let centroids' = compute_centroids classes in
     let dist =
       Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids
       |> Array.fold_left (+.) 0.
     in
-    if dist < 0.1 then
+    if dist < threshold then
       classes
     else
-      iterate centroids' (Array.concat (Array.to_list classes))
+      iterate centroids' (Array.concat (Array.to_list classes)) threshold
 
-  let k_means k init elements =
+  let k_means k init elements threshold =
     let centroids =
       match init with
       | Forgy ->
@@ -81,6 +81,6 @@ struct
          let classes = Array.map Array.of_list classes in
          compute_centroids classes)
     in
-    iterate centroids elements
+    iterate centroids elements threshold
   
 end
