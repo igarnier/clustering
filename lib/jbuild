@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(library
+  (
+  (name k_means)
+  (public_name k-means)
+  (ocamlopt_flags (-O3 -unboxed-types))
+  (libraries (owl batteries parmap))
+  )
+)
