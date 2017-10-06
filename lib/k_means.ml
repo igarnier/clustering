@@ -50,8 +50,9 @@ struct
         let k = closest centroids elt in
         classes.(k) <- elt :: classes.(k)
       ) elements;
+    let classes = Array.filter (function [] -> false | _ -> true) classes in
     Array.map Array.of_list classes
-
+                
   let compute_centroids classes =
     Array.map E.mean classes
 
@@ -59,7 +60,7 @@ struct
     let classes    = compute_classes centroids elements in
     let centroids' = compute_centroids classes in
     let dist =
-      Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids
+      Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
       |> Array.fold_left (+.) 0.
     in
     if dist < threshold then
