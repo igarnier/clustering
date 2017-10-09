@@ -5,6 +5,6 @@
   (name k_means)
   (public_name k-means)
   (ocamlopt_flags (-O3 -unboxed-types))
-  (libraries (owl batteries parmap))
+  (libraries (batteries))
   )
 )
