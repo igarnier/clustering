@@ -69,8 +69,8 @@ struct
       iterate centroids' (Array.concat (Array.to_list classes)) threshold
 
   let k_means k init elements threshold =
-    let centroids =
-      match init with
+    let centroids = 
+     match init with
       | Forgy ->
         Array.of_enum (Random.multi_choice k (Array.enum elements))
       | RandomPartition ->

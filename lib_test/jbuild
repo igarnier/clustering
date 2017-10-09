@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(executables
+ ((names (gaussian))
+  (libraries (k_means owl vplot cairo2))))
+
+(alias
+ ((name runtest)
+  (deps    (gaussian.exe))
+  (action (run ${<}))))
