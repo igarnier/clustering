@@ -2,7 +2,7 @@
 
 (executables
  ((names (gaussian))
-  (libraries (k_means owl vplot cairo2))))
+  (libraries (k_means owl cairo2))))
 
 (alias
  ((name runtest)
