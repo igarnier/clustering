@@ -87,7 +87,8 @@ struct
     else
       arr.(Random.int c)
 
-  (* Note that *)
+  (* Note that the distance to a point to itself is 0, so the probability for a centroid
+     to pick itself is also zero. *)
   let pick_proportional arr =
     let total = Array.fsum arr in
     let r = Random.float total in
