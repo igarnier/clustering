@@ -2,7 +2,7 @@
 
 (executables
  ((names (gaussian))
-  (libraries (k_means owl cairo2))))
+  (libraries (k_means owl))))
 
 (alias
  ((name runtest)
