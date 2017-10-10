@@ -24,13 +24,13 @@ end
 module K = K_means.Make(Elt)
 
 let mean0 =
-  Vec.of_array [| 2.0; ~-. 1.0 |]
+  Vec.of_array [| 1.0; ~-. 0.5 |]
 
 let mean1 =
-  Vec.of_array [| 5.0;  4.0 |]
+  Vec.of_array [| 2.5;  2.0 |]
 
 let mean2 =
-  Vec.of_array [| ~-. 3.0;  0.0 |]
+  Vec.of_array [| ~-. 1.5;  0.0 |]
 
 let dataset0 =
   Array.init 60 (fun _ -> Vec.add mean0 (Vec.gaussian 2))
@@ -72,7 +72,7 @@ let plot =
 let classes = 3
 
 let [| cl0; cl1; cl2 |] = 
-  let result = K.k_means classes K.Forgy dataset 0.1 in
+  let result = K.k_means classes K.KmeansPP dataset 0.1 in
   if Array.length result != classes then
     failwith "bug found"
   else
