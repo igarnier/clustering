@@ -32,53 +32,53 @@ struct
       if x > y then x
       else y
   
-  let closest centroids elt =
+  let closest elements centroids elti =
     let m = ref 0  in
     let d = ref max_float in
     for i = 0 to Array.length centroids - 1 do
-      let dist = E.dist elt centroids.(i) in
+      let dist = E.dist elements.(elti) centroids.(i) in
       if dist < !d then
         (d := dist; m := i)
     done;
     !m, !d
   
   let compute_classes centroids elements =
-    let classes : elt list array =
+    let classes : int list array =
       Array.create (Array.length centroids) []
     in
-    Array.iter (fun elt ->
-        let k, _ = closest centroids elt in
-        classes.(k) <- elt :: classes.(k)
+    Array.iteri (fun elti _ ->
+        let k, _ = closest elements centroids elti in
+        classes.(k) <- elti :: classes.(k)
       ) elements;
     let classes = Array.filter (function [] -> false | _ -> true) classes in
     Array.map Array.of_list classes
                 
-  let compute_centroids classes =
-    Array.map E.mean classes
+  let compute_centroids (elements : elt array) (classes : int array array) =
+    Array.map (fun arr -> E.mean (Array.map (fun i -> elements.(i)) arr)) classes
 
-  let rec iterate centroids elements threshold =
+  let rec iterate (centroids : E.t array) (elements : E.t array) threshold =
     let classes    = compute_classes centroids elements in
-    let centroids' = compute_centroids classes in
+    let centroids' = compute_centroids elements classes in
     let dist =
       Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
-      |> Array.fold_left (+.) 0.
+      |> Array.fsum
     in
     if dist < threshold then
       classes
     else
-      iterate centroids' (Array.concat (Array.to_list classes)) threshold
+      iterate centroids' elements threshold
 
   let forgy_init k elements =
     Array.of_enum (Random.multi_choice k (Array.enum elements))
 
   let random_partition_init k elements =
     let classes = Array.create k [] in
-    Array.iter (fun elt ->
+    Array.iteri (fun elti _ ->
         let i = Random.int k in
-        classes.(i) <- elt :: classes.(i)
+        classes.(i) <- elti :: classes.(i)
       ) elements;
     let classes = Array.map Array.of_list classes in
-    compute_centroids classes
+    compute_centroids elements classes
 
   let pick_uniformly arr =
     let c = Array.length arr in
@@ -103,7 +103,7 @@ struct
   let rec kmeanspp_iter k centroids elements =
     if k = 0 then centroids
     else
-      let dists = Array.map (fun e -> let _, d = closest centroids e in d *. d) elements in
+      let dists = Array.mapi (fun elti _ -> let _, d = closest elements centroids elti in d *. d) elements in
       let i     = pick_proportional dists in
       let centroids = Array.concat [ centroids; [| elements.(i) |] ] in
       kmeanspp_iter (k-1) centroids elements
@@ -114,10 +114,10 @@ struct
     else
       let elt = pick_uniformly elements in
       kmeanspp_iter (k-1) [| elt |] elements
-      
-  let k_means ~k ~init ~elements ~threshold =
+
+  let k_means_internal ~k ~init ~elements ~threshold =
     let centroids = 
-     match init with
+      match init with
       | Forgy ->
         forgy_init k elements
       | RandomPartition ->
@@ -126,5 +126,18 @@ struct
         kmeanspp_init k elements
     in
     iterate centroids elements threshold
+      
+  let k_means ~k ~init ~elements ~threshold =
+    let classes = k_means_internal ~k ~init ~elements ~threshold in
+    Array.map (Array.map (fun i -> elements.(i))) classes
+
+  
+  (* let multi_start ~k ~init ~elements ~threshold ~nstarts = *)
+  (*   let result = Array.init nstarts *)
+  (*       (fun _ -> *)
+  (*          k_means_internal ~k ~init ~elements ~threshold *)
+  (*       ) *)
+
+    
   
 end
