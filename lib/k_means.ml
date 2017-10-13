@@ -131,13 +131,62 @@ struct
     let classes = k_means_internal ~k ~init ~elements ~threshold in
     Array.map (Array.map (fun i -> elements.(i))) classes
 
+  (* 2 x cluster_radius overapproximates the diameter, hopefully tightly*)
+  let cluster_radius elements =
+    let mean = E.mean elements in
+    Array.fold_left (fun maxdist elt ->
+        max maxdist (E.dist elt mean)
+      ) (~-. max_float) elements
   
-  (* let multi_start ~k ~init ~elements ~threshold ~nstarts = *)
-  (*   let result = Array.init nstarts *)
-  (*       (fun _ -> *)
-  (*          k_means_internal ~k ~init ~elements ~threshold *)
-  (*       ) *)
+  let sum_of_cluster_radius classes =
+    Array.fsum (Array.map cluster_radius classes)
 
-    
+  let total_squared_dist_to_mean elements =
+    let mean = E.mean elements in
+    Array.fold_left (fun acc elt ->
+        let d = E.dist elt mean in
+        acc +. d *. d
+      ) 0.0 elements
+
+  let quality classes =
+    Array.fsum (Array.map total_squared_dist_to_mean classes)
+      
+  let multi_start ~k ~init ~elements ~threshold ~nstarts =
+    let results = Array.init nstarts
+        (fun _ ->
+           k_means ~k ~init ~elements ~threshold
+        )
+    in
+    let quality, result =
+      Array.fold_left (fun (min_cost, min_cost_sol) sol ->
+          let cost = quality sol in
+          if cost < min_cost then
+            (cost, sol)
+          else
+            (min_cost, min_cost_sol)
+        ) (max_float, results.(0)) results
+    in
+    quality, result
+
+  let multi_start_parallel ~k ~init ~elements ~threshold ~nstarts =
+    let results =
+      Parmap.array_parmap
+        (fun _ ->
+           Random.self_init ();
+           k_means ~k ~init ~elements ~threshold
+        )
+        (Array.init nstarts (fun _ -> ()))
+    in
+    let quality, result =
+      Array.fold_left (fun (min_cost, min_cost_sol) sol ->
+          let cost = quality sol in
+          if cost < min_cost then
+            (cost, sol)
+          else
+            (min_cost, min_cost_sol)
+        ) (max_float, results.(0)) results
+    in
+    quality, result
+
   
 end
