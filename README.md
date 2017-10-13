@@ -1,5 +1,8 @@
 A functorial k-means clustering implementation in OCaml.
 A standard example is provided in lib_test/gaussian.ml (relies on Owl).
+The library also provides sequential and parallel multi-start k-means,
+as well as ways to assess the tradeoff between the quality of clustering
+and overfitting.
 
 BUILDING & INSTALLING
 
@@ -13,3 +16,4 @@ installed.
    `jbuilder runtest` should build and run the example. The results should be available
    in _build/default/lib_test/dataset.png (to see the clusters as they have been generated)
    and _build/default/lib_test/result.png (to see the clusters as inferred by k-means)
+
