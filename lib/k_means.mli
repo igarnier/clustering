@@ -45,12 +45,15 @@ sig
   *)
   val k_means : k:int -> init:init -> elements:E.t array -> threshold:float -> E.t array array
 
+  (** [tightness] returns the sum over all classes of the sum of squared distances from
+      the mean of the class to all elements of the class. This quantity will decrease 
+      monotonically as [k] increases, and the usual method to determine [k] is to select 
+      the one where this quantity's decrease has its first inflection.  *)
+  val tightness : classes:E.t array array -> float
+
   (** [multi_start] performs [nstarts] independent k-means clusterings and selects among the
-      results the clustering which minimises the sum over all classes of the sum of distances from
-      the mean of the class to all elements of the class. [multi_start] returns this quantity
-      along the solution. This quantity will decrease monotonically as [k] increases, and 
-      the usual method to determine [k] is to select the one where this quantity's decrease has its
-      first inflection.
+      results the clustering which minimises tightness. [multi_start] returns this quantity
+      along the solution. 
   *)
   val multi_start : k:int -> init:init -> elements:E.t array -> threshold:float -> nstarts:int -> float * E.t array array
 

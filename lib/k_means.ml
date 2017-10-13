@@ -148,7 +148,7 @@ struct
         acc +. d *. d
       ) 0.0 elements
 
-  let quality classes =
+  let tightness classes =
     Array.fsum (Array.map total_squared_dist_to_mean classes)
       
   let multi_start ~k ~init ~elements ~threshold ~nstarts =
@@ -157,16 +157,16 @@ struct
            k_means ~k ~init ~elements ~threshold
         )
     in
-    let quality, result =
+    let tightness, result =
       Array.fold_left (fun (min_cost, min_cost_sol) sol ->
-          let cost = quality sol in
+          let cost = tightness sol in
           if cost < min_cost then
             (cost, sol)
           else
             (min_cost, min_cost_sol)
         ) (max_float, results.(0)) results
     in
-    quality, result
+    tightness, result
 
   let multi_start_parallel ~k ~init ~elements ~threshold ~nstarts =
     let results =
@@ -177,16 +177,16 @@ struct
         )
         (Array.init nstarts (fun _ -> ()))
     in
-    let quality, result =
+    let tightness, result =
       Array.fold_left (fun (min_cost, min_cost_sol) sol ->
-          let cost = quality sol in
+          let cost = tightness sol in
           if cost < min_cost then
             (cost, sol)
           else
             (min_cost, min_cost_sol)
         ) (max_float, results.(0)) results
     in
-    quality, result
+    tightness, result
 
   
 end
