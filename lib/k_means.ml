@@ -148,7 +148,7 @@ struct
         acc +. d *. d
       ) 0.0 elements
 
-  let tightness classes =
+  let tightness ~classes =
     Array.fsum (Array.map total_squared_dist_to_mean classes)
       
   let multi_start ~k ~init ~elements ~threshold ~nstarts =
