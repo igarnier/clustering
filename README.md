@@ -8,7 +8,7 @@ BUILDING & INSTALLING
 
 Building and installing the package relies on having the opam package manager
 installed.
-1. Do `opam install jbuilder batteries`.
+1. Do `opam install jbuilder batteries parmap`.
 2. Type `jbuilder build` at the root to build the package.
 3. Type `jbuilder install` to install the package in your .opam directory.
 4. (optional)
