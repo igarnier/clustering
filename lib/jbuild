@@ -2,8 +2,8 @@
 
 (library
   (
-  (name k_means)
-  (public_name k-means)
+  (name clustering)
+  (public_name clustering)
   (ocamlopt_flags (-O3 -unboxed-types))
   (libraries (batteries parmap))
   )

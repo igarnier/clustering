@@ -148,45 +148,7 @@ struct
         acc +. d *. d
       ) 0.0 elements
 
-  let tightness ~classes =
-    Array.fsum (Array.map total_squared_dist_to_mean classes)
-      
-  let multi_start ~k ~init ~elements ~threshold ~nstarts =
-    let results = Array.init nstarts
-        (fun _ ->
-           k_means ~k ~init ~elements ~threshold
-        )
-    in
-    let tightness, result =
-      Array.fold_left (fun (min_cost, min_cost_sol) sol ->
-          let cost = tightness sol in
-          if cost < min_cost then
-            (cost, sol)
-          else
-            (min_cost, min_cost_sol)
-        ) (max_float, results.(0)) results
-    in
-    tightness, result
-
-  let multi_start_parallel ~k ~init ~elements ~threshold ~nstarts =
-    let results =
-      Parmap.array_parmap
-        (fun _ ->
-           Random.self_init ();
-           k_means ~k ~init ~elements ~threshold
-        )
-        (Array.init nstarts (fun _ -> ()))
-    in
-    let tightness, result =
-      Array.fold_left (fun (min_cost, min_cost_sol) sol ->
-          let cost = tightness sol in
-          if cost < min_cost then
-            (cost, sol)
-          else
-            (min_cost, min_cost_sol)
-        ) (max_float, results.(0)) results
-    in
-    tightness, result
-
+  let cost ~classes =
+    Array.fsum (Array.map total_squared_dist_to_mean classes)      
   
 end

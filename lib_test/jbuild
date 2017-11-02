@@ -2,7 +2,7 @@
 
 (executables
  ((names (gaussian))
-  (libraries (k_means owl))))
+  (libraries (clustering owl))))
 
 (alias
  ((name runtest)

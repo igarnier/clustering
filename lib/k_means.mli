@@ -39,25 +39,18 @@ sig
         allows to spread them well. *)
     | KmeansPP
 
+  (** Exception thrown by [k_means] in case something goes awry.*)
+  exception KmeansError of string  
 
   (** [k_means] performs the clustering using to the provided initialization method.
       When the centroids collectively move less than [threshold], the algorithm terminates.
   *)
   val k_means : k:int -> init:init -> elements:E.t array -> threshold:float -> E.t array array
 
-  (** [tightness] returns the sum over all classes of the sum of squared distances from
+  (** [cost] returns the sum over all classes of the sum of squared distances from
       the mean of the class to all elements of the class. This quantity will decrease 
       monotonically as [k] increases, and the usual method to determine [k] is to select 
       the one where this quantity's decrease has its first inflection.  *)
-  val tightness : classes:E.t array array -> float
-
-  (** [multi_start] performs [nstarts] independent k-means clusterings and selects among the
-      results the clustering which minimises tightness. [multi_start] returns this quantity
-      along the solution. 
-  *)
-  val multi_start : k:int -> init:init -> elements:E.t array -> threshold:float -> nstarts:int -> float * E.t array array
-
-  (** Same as [multi_start] but does the job in parallel. *)
-  val multi_start_parallel : k:int -> init:init -> elements:E.t array -> threshold:float -> nstarts:int -> float * E.t array array
+  val cost : classes:E.t array array -> float
 
 end

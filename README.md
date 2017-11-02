@@ -1,8 +1,9 @@
-A functorial k-means clustering implementation in OCaml.
+Functorial k-clustering implementation in OCaml, using either k-means
+or k-medoids.
 A standard example is provided in lib_test/gaussian.ml (relies on Owl).
-The library also provides sequential and parallel multi-start k-means,
+The library also provides sequential and parallel multi-start wrappers,
 as well as ways to assess the tradeoff between the quality of clustering
-and overfitting.
+and overfitting using provided cost functions.
 
 BUILDING & INSTALLING
 
@@ -17,3 +18,6 @@ installed.
    in _build/default/lib_test/dataset.png (to see the clusters as they have been generated)
    and _build/default/lib_test/result.png (to see the clusters as inferred by k-means)
 
+TODOS:
+1. Parmap doesn't work super well: all child processes run on the same CPU. Try with
+   Netmcore.
