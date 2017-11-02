@@ -1,14 +1,10 @@
 open Owl
+open Clustering
 
 module Elt =
 struct
 
   type t = Vec.vec
-
-  let print v =
-    let v0 = Vec.get v 0
-    and v1 = Vec.get v 1 in
-    Printf.sprintf "(%f,%f)" v0 v1
 
   let dist v1 v2 =
     let v1x = Vec.get v1 0 and v1y = Vec.get v1 1
@@ -20,8 +16,6 @@ struct
     Vec.mul_scalar sum (1. /. (float (Array.length vec_array)))
   
 end
-
-module K = K_means.Make(Elt)
 
 let mean0 =
   Vec.of_array [| 1.0; ~-. 0.5 |]
@@ -46,8 +40,6 @@ let dataset = Array.concat [dataset0; dataset1; dataset2]
 let matrix_of_dataset dataset =
   Mat.concatenate dataset
 
-(* let _ = Printf.printf "%dx%d" (Mat.row_num mat) (Mat.col_num mat) *)
-
 let plot =
   let h  = Plot.create "dataset.png" in
   Plot.set_background_color h 255 255 255;
@@ -71,30 +63,69 @@ let plot =
 
 let classes = 3
 
-let [| cl0; cl1; cl2 |] = 
-  let result = K.k_means classes K.KmeansPP dataset 0.1 in
-  if Array.length result != classes then
-    failwith "bug found"
-  else
-    [| result.(0); result.(1); result.(2) |]
-
-let plot =
-  let h  = Plot.create "result.png" in
+(* Test k-medoids *)
+let _ =
+  let module K = K_medoids.Make(Elt) in
+  let [| cl0; cl1; cl2 |] =
+    let result =
+      K.k_medoids
+        ~precompute:false
+        ~elements:dataset
+        ~k:classes
+        ~algorithm:K.PAM
+        ~init:K.KmedoidsPP
+        ~threshold:0.1
+    in
+    if Array.length result != classes then
+      failwith "bug found"
+    else
+      [| result.(0); result.(1); result.(2) |]
+  in
+  let h  = Plot.create "result_kmedoids.png" in
   Plot.set_background_color h 255 255 255;
-
   let ds = matrix_of_dataset cl0 in
   let c1 = Mat.col ds 0 in
   let c2 = Mat.col ds 1 in
   Plot.(scatter ~h ~spec:[ RGB (255,0,0) ] c1 c2);
-
   let ds = matrix_of_dataset cl1 in
   let c1 = Mat.col ds 0 in
   let c2 = Mat.col ds 1 in
   Plot.(scatter ~h ~spec:[ RGB (0,255,0) ] c1 c2);
-
   let ds = matrix_of_dataset cl2 in
   let c1 = Mat.col ds 0 in
   let c2 = Mat.col ds 1 in
   Plot.(scatter ~h ~spec:[ RGB (0,0,255) ] c1 c2);
-
   Plot.output h
+
+(* Test k-medoids *)
+let _ =
+  let module K = K_means.Make(Elt) in
+  let [| cl0; cl1; cl2 |] =
+    let result =
+      K.k_means
+        ~elements:dataset
+        ~k:classes
+        ~init:K.KmeansPP
+        ~threshold:0.1
+    in
+    if Array.length result != classes then
+      failwith "bug found"
+    else
+      [| result.(0); result.(1); result.(2) |]
+  in
+  let h  = Plot.create "result_kmeans.png" in
+  Plot.set_background_color h 255 255 255;
+  let ds = matrix_of_dataset cl0 in
+  let c1 = Mat.col ds 0 in
+  let c2 = Mat.col ds 1 in
+  Plot.(scatter ~h ~spec:[ RGB (255,0,0) ] c1 c2);
+  let ds = matrix_of_dataset cl1 in
+  let c1 = Mat.col ds 0 in
+  let c2 = Mat.col ds 1 in
+  Plot.(scatter ~h ~spec:[ RGB (0,255,0) ] c1 c2);
+  let ds = matrix_of_dataset cl2 in
+  let c1 = Mat.col ds 0 in
+  let c2 = Mat.col ds 1 in
+  Plot.(scatter ~h ~spec:[ RGB (0,0,255) ] c1 c2);
+  Plot.output h
+
