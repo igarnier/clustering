@@ -27,32 +27,38 @@ struct
     | PAM              (* Partition Around Medoids - the classical greedy algorithm. Costly. *)
     | VoronoiIteration (* Another heuristic, less costly but perhaps less reliable. *)
         
-
+  (* Avoid polymorphic refs for efficiency (perhaps a case of premature optimization but well) *)
   type fref = {
-    mutable contents : float
+    mutable c : float
   }
 
   exception KmedoidsError of string
   
-  let fref x = { contents = x }
-  
+  let fref x = { c = x }
+
+  (* [closest dist elt medoids] returns the pair (m,d) such that [medoids.(m)] is closest
+     to [elt] according to the distance function [dist], and the distance is d. *)
   let closest dist elt medoids =
     let m = ref 0  in
     let d = fref max_float in
     for i = 0 to Array.length medoids - 1 do
       let dist = dist elt medoids.(i) in
-      if dist < d.contents then
-        (d.contents <- dist;
+      if dist < d.c then
+        (d.c <- dist;
          m := i)
     done;
-    !m, d.contents
+    !m, d.c
 
+  (* Internal function to compute cost of a choice of medoids. *)
   let cost_ dist elements medoids =
     Array.fold_lefti (fun acc i elt ->
         let _, dist_to_closest = closest dist elt medoids in
         acc +. dist_to_closest
       ) 0.0 elements
 
+  (* One step of the PAM algorithm. For each medoid m, for each element e,
+     evaluate the cost of the configuration where e replaces m as medoid.
+     If cost is lower, keep e as medoid, otherwise keep m. *)
   let pam_step dist elements medoids =
     for mi = 0 to Array.length medoids - 1 do
       let current_cost = fref (cost_ dist elements medoids) in
@@ -61,13 +67,15 @@ struct
         let e = elements.(ei) in
         medoids.(mi) <- e;
         let new_cost = cost_ dist elements medoids in
-        if new_cost >= current_cost.contents then
+        if new_cost >= current_cost.c then
           medoids.(mi) <- m
         else
-          current_cost.contents <- new_cost
+          current_cost.c <- new_cost
       done
     done
-  
+
+  (* [produce_clusters dist elements medoids] computes the voronoi
+     partition induced by the choice of [medoids], according to [dist]. *)
   let produce_clusters dist elements medoids =
     let buckets = Array.make (Array.length medoids) [] in
     Array.iter (fun elt ->
@@ -76,6 +84,7 @@ struct
       ) elements;
     Array.map Array.of_list buckets
 
+  (* computes most central element of a subset of elements *)
   let compute_medoid_of_class dist cls =
     let centralities =
       Array.map (fun elt ->
@@ -93,13 +102,15 @@ struct
     let medoids = Array.map fst result in
     let costs   = Array.fsum (Array.map snd result) in
     (medoids, costs)
-    
+
+  (* One step of the voronoi iteration algorithm.*)
   let voronoi_iteration_step dist elements medoids =
     let classes = produce_clusters dist elements medoids in
     Array.modifyi (fun k _ ->
         fst (compute_medoid_of_class dist classes.(k))
       ) medoids
 
+  (* Generic iteration function. *)
   let iterate dist elements medoids threshold step =
     let exception Break in
     let current_cost = fref (cost_ dist elements medoids) in
@@ -107,14 +118,15 @@ struct
       while true do
         step dist elements medoids;
         let new_cost = cost_ dist elements medoids in
-        assert (new_cost <= current_cost.contents);
-        if current_cost.contents -. new_cost < threshold then
+        assert (new_cost <= current_cost.c);
+        if current_cost.c -. new_cost < threshold then
           raise Break
         else
-          current_cost.contents <- new_cost
+          current_cost.c <- new_cost
       done
     with Break -> ()
 
+  (* Initialization stuff (see k_means.ml) *)
   let pick_uniformly arr =
     let c = Array.length arr in
     if c = 0 then

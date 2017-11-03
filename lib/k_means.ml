@@ -33,7 +33,8 @@ struct
       else y
 
   (* [closest elements centroid elti] returns the pair (m,d) such that
-     [centroids.(m)] is closest to [elements.(elti)]. *)
+     [centroids.(m)] is closest to [elements.(elti)], and the distance
+     is equal to d. *)
   let closest elements centroids elti =
     let m = ref 0  in
     let d = ref max_float in
