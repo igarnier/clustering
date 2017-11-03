@@ -31,7 +31,9 @@ struct
     fun x y ->
       if x > y then x
       else y
-  
+
+  (* [closest elements centroid elti] returns the pair (m,d) such that
+     [centroids.(m)] is closest to [elements.(elti)]. *)
   let closest elements centroids elti =
     let m = ref 0  in
     let d = ref max_float in
@@ -41,7 +43,10 @@ struct
         (d := dist; m := i)
     done;
     !m, !d
-  
+
+  (* [compute_classes centroids elements] computes for each centroid
+     the set of elements which are closest to it, i.e. it computes the
+     voronoi partition of [elements] according to [centroids]. *)
   let compute_classes centroids elements =
     let classes : int list array =
       Array.create (Array.length centroids) []
@@ -52,10 +57,14 @@ struct
       ) elements;
     let classes = Array.filter (function [] -> false | _ -> true) classes in
     Array.map Array.of_list classes
-                
+
+  (* [compute_centroids], given a partition [classes] of [elements], returns
+     the centroid of each class. *)
   let compute_centroids (elements : elt array) (classes : int array array) =
     Array.map (fun arr -> E.mean (Array.map (fun i -> elements.(i)) arr)) classes
 
+  (* Voronoi iteration: partition according to the centroids, then update the centroids,
+     etc under the centroids do not move collectively more than [threshold]. *)
   let rec iterate (centroids : E.t array) (elements : E.t array) threshold =
     let classes    = compute_classes centroids elements in
     let centroids' = compute_centroids elements classes in
@@ -68,9 +77,13 @@ struct
     else
       iterate centroids' elements threshold
 
+  (* [forgy_init] picks [k] initial centroids uniformly at random. *)
   let forgy_init k elements =
     Array.of_enum (Random.multi_choice k (Array.enum elements))
 
+  (* [random_partition_init] picks [k] initial centroids by selecting a
+     partition in [k] classes at random, and then computing the centroid
+     of each class. *)
   let random_partition_init k elements =
     let classes = Array.create k [] in
     Array.iteri (fun elti _ ->
@@ -87,6 +100,8 @@ struct
     else
       arr.(Random.int c)
 
+  (* Given a discrete probability distribution stored in [arr], pick an index according
+     to that distribution. *)
   (* Note that the distance to a point to itself is 0, so the probability for a centroid
      to pick itself is also zero. *)
   let pick_proportional arr =
@@ -100,6 +115,9 @@ struct
     in
     loop 0 r
 
+  (* [kmeanspp_iter] selects [k] centroids iteratively: the first one is taken uniformly at
+     random, and in the inductive step the next one is picked with a probability proportional 
+     to its squared distance to the closest centroid.  *)
   let rec kmeanspp_iter k centroids elements =
     if k = 0 then centroids
     else
@@ -131,7 +149,7 @@ struct
     let classes = k_means_internal ~k ~init ~elements ~threshold in
     Array.map (Array.map (fun i -> elements.(i))) classes
 
-  (* 2 x cluster_radius overapproximates the diameter, hopefully tightly*)
+  (* 2 x cluster_radius overapproximates the diameter, hopefully tightly *)
   let cluster_radius elements =
     let mean = E.mean elements in
     Array.fold_left (fun maxdist elt ->
