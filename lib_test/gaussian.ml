@@ -63,7 +63,7 @@ let plot =
 
 let classes = 3
 
-(* Test k-medoids *)
+(* Test k-medoids avec PAM *)
 let _ =
   let module K = K_medoids.Make(Elt) in
   let [| cl0; cl1; cl2 |] =
@@ -81,7 +81,7 @@ let _ =
     else
       [| result.(0); result.(1); result.(2) |]
   in
-  let h  = Plot.create "result_kmedoids.png" in
+  let h  = Plot.create "result_kmedoids_pam.png" in
   Plot.set_background_color h 255 255 255;
   let ds = matrix_of_dataset cl0 in
   let c1 = Mat.col ds 0 in
@@ -96,6 +96,42 @@ let _ =
   let c2 = Mat.col ds 1 in
   Plot.(scatter ~h ~spec:[ RGB (0,0,255) ] c1 c2);
   Plot.output h
+
+
+(* Test k-medoids avec VoronoiIteration *)
+let _ =
+  let module K = K_medoids.Make(Elt) in
+  let [| cl0; cl1; cl2 |] =
+    let result =
+      K.k_medoids
+        ~precompute:false
+        ~elements:dataset
+        ~k:classes
+        ~algorithm:K.VoronoiIteration
+        ~init:K.KmedoidsPP
+        ~threshold:0.1
+    in
+    if Array.length result != classes then
+      failwith "bug found"
+    else
+      [| result.(0); result.(1); result.(2) |]
+  in
+  let h  = Plot.create "result_kmedoids_vi.png" in
+  Plot.set_background_color h 255 255 255;
+  let ds = matrix_of_dataset cl0 in
+  let c1 = Mat.col ds 0 in
+  let c2 = Mat.col ds 1 in
+  Plot.(scatter ~h ~spec:[ RGB (255,0,0) ] c1 c2);
+  let ds = matrix_of_dataset cl1 in
+  let c1 = Mat.col ds 0 in
+  let c2 = Mat.col ds 1 in
+  Plot.(scatter ~h ~spec:[ RGB (0,255,0) ] c1 c2);
+  let ds = matrix_of_dataset cl2 in
+  let c1 = Mat.col ds 0 in
+  let c2 = Mat.col ds 1 in
+  Plot.(scatter ~h ~spec:[ RGB (0,0,255) ] c1 c2);
+  Plot.output h
+
 
 (* Test k-medoids *)
 let _ =
