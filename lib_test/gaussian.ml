@@ -142,7 +142,7 @@ let _ =
         ~elements:dataset
         ~k:classes
         ~init:K.KmeansPP
-        ~threshold:0.1
+        ~termination:(K.Threshold 0.1)
     in
     if Array.length result != classes then
       failwith "bug found"
@@ -165,3 +165,20 @@ let _ =
   Plot.(scatter ~h ~spec:[ RGB (0,0,255) ] c1 c2);
   Plot.output h
 
+(* (\* Test agglomerative avec Hausdorff *\) *)
+(* module H = *)
+(* struct *)
+(*   include Gromov.Hausdorff.ArrayBased(Elt) *)
+(*   type elt = Elt.t *)
+
+(*   let singleton x = [|x|] *)
+                    
+(*   (\* We deal with partitions, so no need to remove duplicates. *\) *)
+(*   let join a b = Array.concat [a;b] *)
+(* end *)
+
+(* let _ = *)
+(*   let module Agglo = Agglomerative.Make(Elt)(H) in *)
+(*   let tree = Agglo.cluster (Array.to_list dataset) in *)
+(*   let clusters = Agglo.truncate tree 1 in *)
+(*   () *)
