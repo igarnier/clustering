@@ -25,6 +25,12 @@ struct
     | RandomPartition (* Select a random partition *)
     | KmeansPP        (* K-means++ *)
 
+  type termination =
+    | Num_iter  of int
+    | Threshold of float
+    | Min       of { max_iter : int; threshold : float }
+ 
+
   exception KmeansError of string
 
   let max : float -> float -> float =
@@ -66,17 +72,30 @@ struct
 
   (* Voronoi iteration: partition according to the centroids, then update the centroids,
      etc under the centroids do not move collectively more than [threshold]. *)
-  let rec iterate (centroids : E.t array) (elements : E.t array) threshold =
+  let rec iterate (centroids : E.t array) (elements : E.t array) niter termination =
     let classes    = compute_classes centroids elements in
     let centroids' = compute_centroids elements classes in
-    let dist =
-      Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
-      |> Array.fsum
+    let terminate  =
+      match termination with
+      | Num_iter max_iter -> niter >= max_iter
+      | Threshold threshold ->
+        let dist =
+          Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
+          |> Array.fsum
+        in
+        dist < threshold
+      | Min { max_iter; threshold } ->
+        niter >= max_iter ||
+        (let dist =
+          Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
+          |> Array.fsum
+        in
+        dist < threshold)
     in
-    if dist < threshold then
+    if terminate then
       classes
     else
-      iterate centroids' elements threshold
+      iterate centroids elements (niter + 1) termination
 
   (* [forgy_init] picks [k] initial centroids uniformly at random. *)
   let forgy_init k elements =
@@ -134,7 +153,7 @@ struct
       let elt = pick_uniformly elements in
       kmeanspp_iter (k-1) [| elt |] elements
 
-  let k_means_internal ~k ~init ~elements ~threshold =
+  let k_means_internal ~k ~init ~elements ~termination =
     let centroids = 
       match init with
       | Forgy ->
@@ -144,10 +163,10 @@ struct
       | KmeansPP ->
         kmeanspp_init k elements
     in
-    iterate centroids elements threshold
+    iterate centroids elements 0 termination
       
-  let k_means ~k ~init ~elements ~threshold =
-    let classes = k_means_internal ~k ~init ~elements ~threshold in
+  let k_means ~k ~init ~elements ~termination =
+    let classes = k_means_internal ~k ~init ~elements ~termination in
     Array.map (Array.map (fun i -> elements.(i))) classes
 
   (* 2 x cluster_radius overapproximates the diameter, hopefully tightly *)

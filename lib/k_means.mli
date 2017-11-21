@@ -7,7 +7,7 @@ sig
   (** [t] is the type of elements to be clustered. *)
   type t   
 
-  (** In principle, [dist] should be a distance function: symmetric, zero and the diagonal and verifying
+  (** In principle, [dist] should be a distance function: symmetric, zero on the diagonal and verifying
      the triangular inequality. If these assumptions are violated, the algorithm will
      still terminate with a "clustering" though. *)
   val dist : t -> t -> float
@@ -39,13 +39,23 @@ sig
         allows to spread them well. *)
     | KmeansPP
 
+  (** Termination of the algorithm can be either specified as:
+      1) an /exact/ number of iterations [Num_iter],
+      2) a [Threshold] giving the biggest delta-[cost] decrease under which we stop iterating, or
+      3) as the minimum of the above to, i.e. stop iterating when the [cost]-decrease is
+         under [threshold] or when we reach [max_iter]. *)
+  type termination =
+    | Num_iter  of int
+    | Threshold of float
+    | Min       of { max_iter : int; threshold : float }
+
   (** Exception thrown by [k_means] in case something goes awry.*)
   exception KmeansError of string  
 
   (** [k_means] performs the clustering using to the provided initialization method.
       When the centroids collectively move less than [threshold], the algorithm terminates.
   *)
-  val k_means : k:int -> init:init -> elements:E.t array -> threshold:float -> E.t array array
+  val k_means : k:int -> init:init -> elements:E.t array -> termination:termination -> E.t array array
 
   (** [cost] returns the sum over all classes of the sum of squared distances from
       the mean of the class to all elements of the class. This quantity will decrease 

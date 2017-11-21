@@ -7,4 +7,5 @@
     the random state is reinitizalized using Random.self_init per process.
 *)
 val multi_start : f:(unit -> float * 'a) -> nstarts:int -> float * 'a
-val multi_start_parallel : f:(unit -> float * 'a) -> nstarts:int -> ncores:int -> float * 'a
+
+(* val multi_start_parallel : f:(unit -> float * 'a) -> nstarts:int -> ncores:int -> float * 'a *)

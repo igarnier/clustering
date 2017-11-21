@@ -5,6 +5,6 @@
   (name clustering)
   (public_name clustering)
   (ocamlopt_flags (-O3 -unboxed-types))
-  (libraries (batteries parmap))
+  (libraries (batteries minivpt))
   )
 )
