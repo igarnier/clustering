@@ -20,101 +20,101 @@ sig
   val dist : t -> t -> float
 
   val join : t -> t -> t
-    
+
 end
 
 module Make = functor (E : Element) (S : ElementSet with type elt = E.t) ->
 struct
 
-  module VP = Vp_tree.Make(S)
-  
-  type tree =
-    | Leaf of S.t
-    | Node of S.t * tree * tree
+  type cluster =
+    {
+      set  : S.t;
+      tree : tree;
+      uid  : int
+    }
+  and tree =
+    | Node of cluster * cluster
+    | Leaf
 
-  type cluster = { set : S.t; closest : S.t; dist : float; tree : tree }
+  let uid  = 
+    let x = ref (-1) in 
+    fun () -> incr x; !x
 
-  (* let dist c1 c2 = S.dist c1.set c2.set *)
+  let mkcluster set tree =
+    {
+      set; tree; uid = uid ()
+    }
 
-  (* let join c1 c2 = *)
-  (*   let set = S.join c1.set c2.set in *)
-  (*   { *)
-  (*     set; tree = Node(set, cluster1.tree, cluster2.tree) *)
-  (*   } *)
-
-  let sort clusters =
-    List.sort (fun { dist = d1 } { dist = d2 } -> Float.compare d1 d2) clusters
-
-  let take key l =
-    let rec take key l acc =
-      match l with
-      | [] -> failwith "take: key not found"
-      | c :: tl ->
-        if S.dist c.set key = 0.0 then
-          (c, List.rev_append acc tl)
+  (* Hash-cons distance computation between clusters. *)
+  module Table = Hashtbl.Make(
+    struct 
+      type t = (cluster * cluster)
+               
+      let equal (c1,c2) (c1',c2') =
+           (c1.uid = c1'.uid && c2.uid = c2'.uid)
+        || (c1.uid = c2'.uid && c2.uid = c1'.uid)
+        
+      let hash (c1,c2) = 
+        if c1.uid < c2.uid then
+          Hashtbl.hash (c1.uid, c2.uid)
         else
-          take key tl (c :: acc)
-    in
-    take key l []
+          Hashtbl.hash (c2.uid, c1.uid)
+    end)
 
-  let update_closest set clusters =
-    let rec update_closest set clusters closest_opt acc =
-      match clusters with
-      | [] -> acc, closest_opt
-      | c :: tl ->
-        let d = S.dist set c.set in
-        let c =
-          if d < c.dist then
-            { c with dist = d; closest = set }
-          else
-            c
-        in
-        match closest_opt with
+  let dist sz =
+    let table = Table.create sz in
+    fun c1 c2 ->
+      if c1.uid = c2.uid then 0.0
+      else
+        match Table.find_option table (c1, c2) with
+        | Some dist -> dist
         | None ->
-          update_closest set tl (Some (c.set, d)) (c :: acc)
-        | Some (_, closest_dist) when d < closest_dist ->
-          update_closest set tl (Some (c.set, d)) (c :: acc)
-        | _ ->
-          update_closest set tl closest_opt (c :: acc)
-    in
-    match update_closest set clusters None [] with
-    | (clusters, None) -> failwith "empty clusters"
-    | (clusters, Some (closest, closest_dist)) -> (clusters, closest, closest_dist)
+          let dist = S.dist c1.set c2.set in
+          Table.add table (c1, c2) dist;
+          dist
 
-  (* Invariant: when calling [iterate clusters], clusters is sorted according to dist. *)
-  let rec iterate clusters =
+  let minimum_pairwise_distance (dist : cluster -> cluster -> float) clusters =
     match clusters with
-    | []         -> failwith "empty clusters list"
-    | [cluster]  -> Leaf cluster.set
-    | [cl1; cl2] ->
-      let s = S.join cl1.set cl2.set in
-      Node(s, cl1.tree, cl2.tree)
-    | _ ->
-      match clusters with
-      | [] -> failwith "bug"
-      | head :: tail ->
-        let set  = S.join head.set head.closest in
-        let closest_cluster, tail = take head.closest tail in
-        let tail, closest, dist   = update_closest set tail in
-        let c = {
-          set; closest; dist; tree = Node(set, head.tree, closest_cluster.tree)
-        } in
-        iterate (sort (c :: tail))
+    | []  -> invalid_arg "empty cluster list"
+    | [c] ->
+      (0.0, c, c)
+    | c :: c' :: tl_ ->
+      List.fold_lefti (fun acc i c ->
+          List.fold_lefti (fun acc j c' ->
+              if j > i then
+                let (best_d, _, _) = acc in
+                let d = dist c c' in
+                if d < best_d then
+                  (d, c, c')
+                else
+                  acc
+              else
+                acc
+            ) acc clusters
+        ) (dist c c', c, c') clusters
 
+  let rec iterate dist clusters =
+    match clusters with
+    | []  -> invalid_arg "empty cluster list"
+    | [c] -> c
+    | _   ->
+      let (d, c, c') = minimum_pairwise_distance dist clusters in
+      let clusters   = List.filter (fun c0 -> c0.uid <> c.uid && c0.uid <> c'.uid) clusters in
+      let joined     = mkcluster (S.join c.set c'.set) (Node(c,c')) in
+      iterate dist (joined :: clusters)
+        
   let cluster elements =
-    let elements = List.map S.singleton elements in
-    let vptree   = VP.create elements in
-    let clusters = List.map (fun set ->
-        let dist, closest = VP.nearest_neighbor set vptree in
-        { set; closest; dist; tree = Leaf set }
-      ) elements
+    let len  = List.length elements in
+    let dist = dist len in
+    let clusters = 
+      List.map (fun x -> mkcluster (S.singleton x) Leaf) elements
     in
-    iterate clusters
+    iterate dist clusters
  
-  let truncate tree depth =
-    let rec truncate tree depth queue acc =
+  let truncate cluster depth =
+    let rec truncate { set; tree } depth queue acc =
       match tree with
-      | Leaf set ->
+      | Leaf ->
         (if depth > 0 then
            invalid_arg "truncate: tree too short"
          else
@@ -123,17 +123,17 @@ struct
            | [] -> acc
            | (next, d) :: tl ->
              truncate next d tl acc)
-      | Node(set, l, r) ->
+      | Node(l, r) ->
         if depth = 0 then
-           let acc = set :: acc in
-           match queue with
-           | [] -> acc
-           | (next, d) :: tl ->
-             truncate next d tl acc
+          let acc = set :: acc in
+          match queue with
+          | [] -> acc
+          | (next, d) :: tl ->
+            truncate next d tl acc
         else
           truncate l (depth-1) ((r,depth-1) :: queue) acc
     in
-    truncate tree depth [] []
+    truncate cluster depth [] []
 
 
 end

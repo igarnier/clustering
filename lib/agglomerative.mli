@@ -36,11 +36,17 @@ end
 module Make : functor (E : Element) (S : ElementSet with type elt = E.t) ->
 sig
 
-  type tree =
-    | Leaf of S.t
-    | Node of S.t * tree * tree
+  type cluster =
+    {
+      set  : S.t;
+      tree : tree;
+      uid  : int
+    }
+  and tree =
+    | Node of cluster * cluster
+    | Leaf
 
-  val cluster : E.t list -> tree
+  val cluster : E.t list -> cluster
 
-  val truncate : tree -> int -> S.t list
+  val truncate : cluster -> int -> S.t list
 end
