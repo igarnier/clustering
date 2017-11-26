@@ -110,7 +110,7 @@ struct
       List.map (fun x -> mkcluster (S.singleton x) Leaf) elements
     in
     iterate dist clusters
- 
+
   let truncate cluster depth =
     let rec truncate { set; tree } depth queue acc =
       match tree with
@@ -135,5 +135,13 @@ struct
     in
     truncate cluster depth [] []
 
+  let all_clusters cluster =
+    let rec fold { set; tree } depth acc =
+      match tree with
+      | Leaf -> (set, depth) :: acc
+      | Node(l, r) ->
+        fold r (depth+1) (fold l (depth+1) ((set, depth) :: acc))
+    in
+    fold cluster 0 []
 
 end

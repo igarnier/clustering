@@ -48,5 +48,10 @@ sig
 
   val cluster : E.t list -> cluster
 
+  (** [truncate c depth] returns all the sub-clusters at depth [depth]. 
+      The depth of the root is 0. *)
   val truncate : cluster -> int -> S.t list
+
+  (** Returns all clusters along their depths. *)
+  val all_clusters : cluster -> (S.t * int) list
 end
