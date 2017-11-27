@@ -17,30 +17,31 @@ end
     This implementation provides several initialization algorithms, 
     the standard one being Kmeans++ (KmeansPP) *)
 type init =
-
+  [
   (** [Forgy] selects k elements at random (without replacement) as initial centroids. *)
-  | Forgy
+  | `Forgy
 
   (** [KmedoidsPP] selects initial medoids iteratively with probabilities proportional
       to their distance to the previously selected centroids. This intuitively
       allows to spread them well. *)
-  | KmedoidsPP
+  | `KmedoidsPP ]
 
 (** Algorithm used to perform partitioning. *)
 type algorithm =
-
+  [
   (** [PAM] stands for Partition Around Medoids - the classical greedy algorithm. Costly. *)
-  | PAM
+  | `PAM
 
   (** Another heuristic, proceeding similarly to Lloyd's algorithm for Kmeans. Less costly
       (but still more than Kmeans) but perhaps less precise. *)
-  | VoronoiIteration
+  | `VoronoiIteration ]
 
 (** See [K_means]. *)
 type termination =
-  | Num_iter  of int
-  | Threshold of float
-  | Min       of { max_iter : int; threshold : float }
+  [ `Num_iter  of int
+  | `Threshold of float
+  | `Min       of constraints ]
+and constraints = { max_iter : int; threshold : float }
 
 
 (** Exception thrown by [k_medoids] in case something goes awry.*)

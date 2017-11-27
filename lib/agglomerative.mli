@@ -7,7 +7,7 @@ sig
   type t
 
 
-  (** [dist] should be a distance function: symmetric, zero and the diagonal and verifying
+  (** [dist] should be a distance function: symmetric, zero on the diagonal and verifying
      the triangular inequality.  *)
   val dist : t -> t -> float
   
@@ -15,24 +15,33 @@ end
 
 module type ElementSet =
 sig
-
+  
+  (** [t] is the type of (multi)-sets of elements. *)
   type t
+
+  (** [elt] is the type of elements to be clustered. *)
   type elt
 
+  (** [singleton x] is the cluster containing [x] as only element. *)
   val singleton : elt -> t
 
+  (** The user should provide [dist], aa distance function on clusters.
+      A typical (costly) choice is the Hausdorff distance (see e.g. the [gromov] package).
+      Other, non-metric choices are sometimes used.
+  *)
   val dist : t -> t -> float
 
+  (** One should be able to "join" clusters. This can be multiset union, set union
+      or any sensible overapproximation - the algorithm will work anyway (think
+      for instance of convex hulls in R^n) *)
   val join : t -> t -> t
 
 end
 
-(* [Make] takes as first argument a module [E : Element] of elements 
-   admitting the structure of a metric space together with that of a 
-   total order. The second argument of [Make] is a module endowing
-   /sets/ of elements with the structure of a metric space (for
-   instance, the Hausdorff distances over [E], but other choices
-   are possible).*)
+(** [Make] takes as first argument a module [E : Element] of elements 
+    admitting the structure of a metric space. The second argument of
+    [Make] is a module endowing sets of elements with the structure of 
+    a metric space. *)
 module Make : functor (E : Element) (S : ElementSet with type elt = E.t) ->
 sig
 
@@ -54,4 +63,5 @@ sig
 
   (** Returns all clusters along their depths. *)
   val all_clusters : cluster -> (S.t * int) list
+
 end

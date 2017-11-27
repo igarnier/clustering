@@ -14,17 +14,18 @@ sig
 end
 
 type init =
-  | Forgy      (* Selects k elements at random (without replacement) *)
-  | KmedoidsPP (* K-means++ *)
+  [ `Forgy        (* Selects k elements at random (without replacement) *)
+  | `KmedoidsPP ] (* K-medoids++, cf K-means++ *)
 
 type algorithm =
-  | PAM              (* Partition Around Medoids - the classical greedy algorithm. Costly. *)
-  | VoronoiIteration (* Another heuristic, less costly but perhaps less reliable. *)
+  [ `PAM                (* Partition Around Medoids - the classical greedy algorithm. Costly. *)
+  | `VoronoiIteration ] (* Another heuristic, less costly but perhaps less reliable. *)
 
 type termination =
-  | Num_iter  of int
-  | Threshold of float
-  | Min       of { max_iter : int; threshold : float }
+  [ `Num_iter  of int
+  | `Threshold of float
+  | `Min       of constraints ]
+and constraints =  { max_iter : int; threshold : float }
 
 exception KmedoidsError of string
 
@@ -196,26 +197,26 @@ struct
       done
     with Break -> ()
 
-  let k_medoids_internal dist elements k init algorithm termination =
+  let k_medoids_internal dist elements k (init : init) algorithm (termination : termination) =
     let medoids =
       (* Initialize medoids *)
       match init with
-      | KmedoidsPP ->
+      | `KmedoidsPP ->
         kmedoidspp_init dist k elements
-      | Forgy ->
+      | `Forgy ->
         forgy_init k elements
     in
     (* Select algorithm used for iteration step *)
     let step = match algorithm with
-      | PAM -> pam_step
-      | VoronoiIteration -> voronoi_iteration_step
+      | `PAM -> pam_step
+      | `VoronoiIteration -> voronoi_iteration_step
     in
     (match termination with
-     | Num_iter n ->
+     | `Num_iter n ->
        iterate_n dist elements medoids step n
-     | Threshold threshold ->
+     | `Threshold threshold ->
        iterate_threshold dist elements medoids step threshold
-     | Min { max_iter = n; threshold } ->
+     | `Min { max_iter = n; threshold } ->
        iterate_min dist elements medoids step n threshold
     );
     produce_clusters dist elements medoids

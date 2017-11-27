@@ -22,19 +22,19 @@ end
     This implementation provides several initialization algorithms, 
     the standard one being Kmeans++ (KmeansPP) *)
 type init =
-
+  [
   (** [Forgy] selects k elements at random (without replacement) as initial centroids. *)
-  | Forgy
+  | `Forgy
 
   (** Assigns each point to a random cluster, and computes the corresponding centroid.
       Note that these centroids do not necessarily belong to the dataset, which might
       cause robustness issues. *)  
-  | RandomPartition
+  | `RandomPartition
 
   (** [KmeansPP] selects initial centroids iteratively with probabilities proportional
       to their squared distance to the previously selected centroids. This intuitively
       allows to spread them well. *)
-  | KmeansPP
+  | `KmeansPP ]
 
 (** Termination of the algorithm can be either specified as:
     1) an /exact/ number of iterations [Num_iter],
@@ -42,9 +42,12 @@ type init =
     3) as the minimum of the above to, i.e. stop iterating when the [cost]-decrease is
        under [threshold] or when we reach [max_iter]. *)
 type termination =
-  | Num_iter  of int
-  | Threshold of float
-  | Min       of { max_iter : int; threshold : float }
+  [
+  | `Num_iter  of int
+  | `Threshold of float
+  | `Min       of constraints ]
+and constraints =  { max_iter : int; threshold : float }
+
 
 (** Exception thrown by [k_means] in case something goes awry.*)
 exception KmeansError of string  

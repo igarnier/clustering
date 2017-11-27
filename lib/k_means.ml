@@ -16,15 +16,16 @@ sig
 end
 
 type init =
-  | Forgy           (* Selects k elements at random (without replacement) *)
-  | RandomPartition (* Select a random partition *)
-  | KmeansPP        (* K-means++ *)
+  [ `Forgy           (* Selects k elements at random (without replacement) *)
+  | `RandomPartition (* Select a random partition *)
+  | `KmeansPP ]       (* K-means++ *)
+
 
 type termination =
-  | Num_iter  of int
-  | Threshold of float
-  | Min       of { max_iter : int; threshold : float }
-
+  [ `Num_iter  of int
+  | `Threshold of float
+  | `Min       of constraints ]
+and constraints =  { max_iter : int; threshold : float }
 
 exception KmeansError of string
 
@@ -72,19 +73,19 @@ struct
 
   (* Voronoi iteration: partition according to the centroids, then update the centroids,
      etc under the centroids do not move collectively more than [threshold]. *)
-  let rec iterate (centroids : E.t array) (elements : E.t array) niter termination =
+  let rec iterate (centroids : E.t array) (elements : E.t array) niter (termination : termination) =
     let classes    = compute_classes centroids elements in
     let centroids' = compute_centroids elements classes in
     let terminate  =
       match termination with
-      | Num_iter max_iter -> niter >= max_iter
-      | Threshold threshold ->
+      | `Num_iter max_iter -> niter >= max_iter
+      | `Threshold threshold ->
         let dist =
           Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
           |> Array.fsum
         in
         dist < threshold
-      | Min { max_iter; threshold } ->
+      | `Min { max_iter; threshold } ->
         niter >= max_iter ||
         (let dist =
           Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
@@ -153,14 +154,14 @@ struct
       let elt = pick_uniformly elements in
       kmeanspp_iter (k-1) [| elt |] elements
 
-  let k_means_internal ~k ~init ~elements ~termination =
+  let k_means_internal ~k ~(init : init) ~elements ~(termination : termination) =
     let centroids = 
       match init with
-      | Forgy ->
+      | `Forgy ->
         forgy_init k elements
-      | RandomPartition ->
+      | `RandomPartition ->
         random_partition_init k elements
-      | KmeansPP ->
+      | `KmeansPP ->
         kmeanspp_init k elements
     in
     iterate centroids elements 0 termination

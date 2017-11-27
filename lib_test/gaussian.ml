@@ -58,16 +58,15 @@ let classes = 3
 (* Test k-medoids avec PAM *)
 let _ =
   let module K = K_medoids.Make(Elt) in
-  let open K_medoids in
   let [| cl0; cl1; cl2 |] =
     let result =
       K.k_medoids
         ~precompute:false
         ~elements:dataset
         ~k:classes
-        ~algorithm:PAM
-        ~init:KmedoidsPP
-        ~termination:(Threshold 0.1)
+        ~algorithm:`PAM
+        ~init:`KmedoidsPP
+        ~termination:(`Threshold 0.1)
     in
     if Array.length result != classes then
       failwith "bug found"
@@ -80,16 +79,15 @@ let _ =
 (* Test k-medoids avec VoronoiIteration *)
 let _ =
   let module K = K_medoids.Make(Elt) in
-  let open K_medoids in
   let [| cl0; cl1; cl2 |] =
     let result =
       K.k_medoids
         ~precompute:false
         ~elements:dataset
         ~k:classes
-        ~algorithm:VoronoiIteration
-        ~init:KmedoidsPP
-        ~termination:(Threshold 0.1)
+        ~algorithm:`VoronoiIteration
+        ~init:`KmedoidsPP
+        ~termination:(`Threshold 0.1)
     in
     if Array.length result != classes then
       failwith "bug found"
@@ -101,14 +99,13 @@ let _ =
 (* Test k-medoids *)
 let _ =
   let module K = K_means.Make(Elt) in
-  let open K_means in
   let [| cl0; cl1; cl2 |] =
     let result =
       K.k_means
         ~elements:dataset
         ~k:classes
-        ~init:KmeansPP
-        ~termination:(Threshold 0.1)
+        ~init:`KmeansPP
+        ~termination:(`Threshold 0.1)
     in
     if Array.length result != classes then
       failwith "bug found"
