@@ -13,27 +13,32 @@ sig
   
 end
 
+type init =
+  | Forgy      (* Selects k elements at random (without replacement) *)
+  | KmedoidsPP (* K-means++ *)
+
+type algorithm =
+  | PAM              (* Partition Around Medoids - the classical greedy algorithm. Costly. *)
+  | VoronoiIteration (* Another heuristic, less costly but perhaps less reliable. *)
+
+type termination =
+  | Num_iter  of int
+  | Threshold of float
+  | Min       of { max_iter : int; threshold : float }
+
+exception KmedoidsError of string
+
+
 module Make(E : Element) =
 struct
 
   type elt = E.t
 
-  type init =
-    | Forgy      (* Selects k elements at random (without replacement) *)
-    | KmedoidsPP (* K-means++ *)
-
-
-  type algorithm =
-    | PAM              (* Partition Around Medoids - the classical greedy algorithm. Costly. *)
-    | VoronoiIteration (* Another heuristic, less costly but perhaps less reliable. *)
-        
   (* Avoid polymorphic refs for efficiency (perhaps a case of premature optimization but well) *)
   type fref = {
     mutable c : float
   }
 
-  exception KmedoidsError of string
-  
   let fref x = { c = x }
 
   (* [closest dist elt medoids] returns the pair (m,d) such that [medoids.(m)] is closest
@@ -110,22 +115,6 @@ struct
         fst (compute_medoid_of_class dist classes.(k))
       ) medoids
 
-  (* Generic iteration function. *)
-  let iterate dist elements medoids threshold step =
-    let exception Break in
-    let current_cost = fref (cost_ dist elements medoids) in
-    try
-      while true do
-        step dist elements medoids;
-        let new_cost = cost_ dist elements medoids in
-        assert (new_cost <= current_cost.c);
-        if current_cost.c -. new_cost < threshold then
-          raise Break
-        else
-          current_cost.c <- new_cost
-      done
-    with Break -> ()
-
   (* Initialization stuff (see k_means.ml) *)
   let pick_uniformly arr =
     let c = Array.length arr in
@@ -169,6 +158,68 @@ struct
       let elt = pick_uniformly elements in
       kmedoidspp_iter dist (k-1) [| elt |] elements
 
+
+
+  (* The [iterate_?] functions are parameterised by a step function [step]. Each will
+     destructively update [medoids] and [elements] until termination. *)
+
+  let iterate_n dist elements medoids step n =
+    for i = 1 to n do
+      step dist elements medoids
+    done
+
+  let iterate_threshold dist elements medoids step threshold =
+    let cost = fref (cost_ dist elements medoids) in
+    let loop = ref true in
+    while !loop do
+      step dist elements medoids;
+      let new_cost = cost_ dist elements medoids in
+      let delta    = cost.c -. new_cost in
+      if delta >= 0.0 && delta < threshold then
+        loop := false
+      else
+        cost.c <- new_cost
+    done
+
+  let iterate_min dist elements medoids step n threshold =
+    let cost = fref (cost_ dist elements medoids) in
+    let exception Break in
+    try
+      for i = 1 to n do
+        step dist elements medoids;
+        let new_cost = cost_ dist elements medoids in
+        let delta    = cost.c -. new_cost in
+        if delta >= 0.0 && delta < threshold then
+          raise Break
+        else
+          cost.c <- new_cost
+      done
+    with Break -> ()
+
+  let k_medoids_internal dist elements k init algorithm termination =
+    let medoids =
+      (* Initialize medoids *)
+      match init with
+      | KmedoidsPP ->
+        kmedoidspp_init dist k elements
+      | Forgy ->
+        forgy_init k elements
+    in
+    (* Select algorithm used for iteration step *)
+    let step = match algorithm with
+      | PAM -> pam_step
+      | VoronoiIteration -> voronoi_iteration_step
+    in
+    (match termination with
+     | Num_iter n ->
+       iterate_n dist elements medoids step n
+     | Threshold threshold ->
+       iterate_threshold dist elements medoids step threshold
+     | Min { max_iter = n; threshold } ->
+       iterate_min dist elements medoids step n threshold
+    );
+    produce_clusters dist elements medoids
+
   let k_medoids ~precompute ~elements =
     if precompute then
       let len = Array.length elements in
@@ -177,36 +228,12 @@ struct
         )
       in
       let dist i j = mat.(i).(j) in
-      fun ~k ~init ~algorithm ~threshold ->
-        let elements_indices = Array.init len (fun i -> i) in
-        let medoids =
-          match init with
-          | KmedoidsPP ->
-            kmedoidspp_init dist k elements_indices
-          | Forgy ->
-            forgy_init k elements_indices
-        in
-        (match algorithm with
-         | PAM ->
-           iterate dist elements_indices medoids threshold pam_step
-         | VoronoiIteration ->
-           iterate dist elements_indices medoids threshold voronoi_iteration_step);
-        let clusters = produce_clusters dist elements_indices medoids in
-        Array.map (Array.map (fun i -> elements.(i))) clusters        
+      let elements_indices = Array.init len (fun i -> i) in
+      fun ~k ~init ~algorithm ~termination ->
+        let clusters = k_medoids_internal dist elements_indices k init algorithm termination in
+        Array.map (Array.map (fun i -> elements.(i))) clusters
     else
-      fun ~k ~init ~algorithm ~threshold ->
-        let medoids =
-          match init with
-          | KmedoidsPP ->
-            kmedoidspp_init E.dist k elements
-          | Forgy ->
-            forgy_init k elements
-        in
-        (match algorithm with
-         | PAM ->
-           iterate E.dist elements medoids threshold pam_step
-         | VoronoiIteration ->
-           iterate E.dist elements medoids threshold voronoi_iteration_step);
-        produce_clusters E.dist elements medoids
+      fun ~k ~init ~algorithm ~termination ->
+        k_medoids_internal E.dist elements k init algorithm termination
   
 end

@@ -2,7 +2,7 @@
 
 (executables
  ((names (gaussian))
-  (libraries (clustering owl))))
+  (libraries (vlayout vplot clustering owl gromov))))
 
 (alias
  ((name runtest)

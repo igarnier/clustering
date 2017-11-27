@@ -15,23 +15,23 @@ sig
   
 end
 
+type init =
+  | Forgy           (* Selects k elements at random (without replacement) *)
+  | RandomPartition (* Select a random partition *)
+  | KmeansPP        (* K-means++ *)
+
+type termination =
+  | Num_iter  of int
+  | Threshold of float
+  | Min       of { max_iter : int; threshold : float }
+
+
+exception KmeansError of string
+
 module Make(E : Element) =
 struct
 
   type elt = E.t
-
-  type init =
-    | Forgy           (* Selects k elements at random (without replacement) *)
-    | RandomPartition (* Select a random partition *)
-    | KmeansPP        (* K-means++ *)
-
-  type termination =
-    | Num_iter  of int
-    | Threshold of float
-    | Min       of { max_iter : int; threshold : float }
- 
-
-  exception KmeansError of string
 
   let max : float -> float -> float =
     fun x y ->
@@ -166,8 +166,11 @@ struct
     iterate centroids elements 0 termination
       
   let k_means ~k ~init ~elements ~termination =
-    let classes = k_means_internal ~k ~init ~elements ~termination in
-    Array.map (Array.map (fun i -> elements.(i))) classes
+    if Array.length elements = 0 then
+      raise (KmeansError "k_means: empty elements array")
+    else
+      let classes = k_means_internal ~k ~init ~elements ~termination in
+      Array.map (Array.map (fun i -> elements.(i))) classes
 
   (* 2 x cluster_radius overapproximates the diameter, hopefully tightly *)
   let cluster_radius elements =
