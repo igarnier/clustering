@@ -55,9 +55,7 @@ exception KmeansError of string
 module Make : functor (E : Element) ->
 sig
 
-  (** [k_means] performs the clustering using to the provided initialization method.
-      When the centroids collectively move less than [threshold], the algorithm terminates.
-  *)
+  (** [k_means] performs the clustering using to the provided initialization method. *)
   val k_means : k:int -> init:init -> elements:E.t array -> termination:termination -> E.t array array
 
   (** [cost] returns the sum over all classes of the sum of squared distances from

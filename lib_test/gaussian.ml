@@ -45,7 +45,7 @@ let plot_scatter ds1 ds2 ds3 deco =
   let data2 = Scatter.({ data = ds2; plot_type = Scatter { shape = Cross { length = 0.05 }; color = Vlayout.Style.green } }) in
   let data3 = Scatter.({ data = ds3; plot_type = Scatter { shape = Square { length = 0.05 }; color = Vlayout.Style.blue } }) in
   Plot.Plot {
-    vp = Viewport.AutoY { xsize = 500 };
+    vp = Viewport.AutoY { xsize = Units.mm 200. };
     plot = Scatter { data = [data1; data2; data3] @ deco; options = [] }
   }
   
@@ -139,8 +139,17 @@ struct
   let join a b = Array.concat [a;b]
 end
 
+
+module Agglo = Agglomerative.Make(Elt)(H)
+
+let rec display (cluster : Agglo.cluster) =
+  match cluster.Agglo.tree with
+  | Agglo.Node(c, c') ->
+    `Node(cluster.set, [display c; display c'])
+  | Agglo.Leaf ->
+    `Node(cluster.set, [])
+
 let _ =
-  let module Agglo = Agglomerative.Make(Elt)(H) in
   let tree = Agglo.cluster (Array.to_list dataset) in
   let clusters = Agglo.all_clusters tree in
   let clusters = List.sort (fun (x, _) (y, _) ->  
@@ -151,4 +160,21 @@ let _ =
   let clusters = List.take 4 clusters in
   let clusters = Agglo.truncate tree 2 in
   let boxes = Scatter.{ data = [||]; plot_type = Decoration (List.map print_cluster clusters) } in
-  Plot.plot_pdf "agglomerative.pdf" (plot_scatter dataset0 dataset1 dataset2 [boxes])
+  Plot.plot_pdf "agglomerative.pdf" (plot_scatter dataset0 dataset1 dataset2 [boxes]);
+  Plot.plot_pdf "dendrogram.pdf"
+    (Plot.Cmd
+       [Trees.plot
+          ~options:[`Deltax (Units.mm 0.0); `Deltay (Units.mm 20.0); `Scalex 0.4; `Scaley 0.9; `Halign `Bottom; ]
+          ~viewport:(Viewport.AutoX { ysize = Units.mm 300.0 })
+          ~data:
+            { tree = display tree;
+              tree_type =
+                Dendrogram { lbl = (fun set -> 
+                    let len  = Array.length set in
+                    let flen = float len in
+                    let text = [Cmds.text ~pos:{ pos = Vlayout.Pt.zero; relpos = Cmds.North } ~width:10.0 ~height:5.0 ~text:(string_of_int len)] in
+                    text, flen)
+                  }
+            }
+       ]
+    )

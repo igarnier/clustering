@@ -15,7 +15,7 @@ end
 
 (** Initial choice of medoids.
     This implementation provides several initialization algorithms, 
-    the standard one being Kmeans++ (KmeansPP) *)
+    the standard one being Kmedoids++, identical to Kmeans++ *)
 type init =
   [
   (** [Forgy] selects k elements at random (without replacement) as initial centroids. *)
@@ -63,8 +63,7 @@ sig
      ...
   *)
   
-  (** [k_means] performs the clustering using to the provided initialization method.
-      When the centroids collectively move less than [threshold], the algorithm terminates. *)
+  (** [k_means] performs the clustering using the provided initialization method. *)
   val k_medoids : precompute:bool -> elements:E.t array -> k:int -> init:init -> algorithm:algorithm -> termination:termination -> E.t array array
 
   (** [cost] returns the sum over all classes of the sum of distances from

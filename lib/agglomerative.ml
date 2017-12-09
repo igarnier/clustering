@@ -45,7 +45,7 @@ struct
       set; tree; uid = uid ()
     }
 
-  (* Hash-cons distance computation between clusters. *)
+  (* Hash distance computation between clusters. *)
   module Table = Hashtbl.Make(
     struct 
       type t = (cluster * cluster)
