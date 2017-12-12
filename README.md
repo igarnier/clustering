@@ -1,7 +1,14 @@
-Functorial k-clustering implementation in OCaml, using either k-means
-or k-medoids.
-A standard example is provided in lib_test/gaussian.ml (relies on Owl).
-The library also provides sequential and parallel multi-start wrappers,
+Functorial k-clustering implementation in OCaml.
+
+Provided algorithms:
+* k-means (voronoi iteration + various initialisation methods)
+* k-medoids (voronoi iteration or PAM + various initialisation methods)
+* agglomerative hierarchical clustering
+
+For some simple, typical distance measures used in maths, look at the gromov library.
+
+Some examples are provided in lib_test/gaussian.ml (relies on owl, vplot and gromov).
+The library also provides sequential (and soon parallel) multi-start wrappers,
 as well as ways to assess the tradeoff between the quality of clustering
 and overfitting using provided cost functions.
 
@@ -21,3 +28,4 @@ installed.
 TODOS:
 1. Parmap doesn't work super well: all child processes run on the same CPU. Try with
    Netmcore.
+2. Compare quality of clustering as well as performance with scikit-learn's implementation
