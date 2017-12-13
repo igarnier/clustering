@@ -5,6 +5,10 @@ Provided algorithms:
 * k-medoids (voronoi iteration or PAM + various initialisation methods)
 * agglomerative hierarchical clustering
 
+Some example code is available here:
+
+https://github.com/igarnier/clustering/wiki/An-example-with-k-means
+
 For some simple, typical distance measures used in maths, look at the gromov library.
 
 Some examples are provided in lib_test/gaussian.ml (relies on owl, vplot and gromov).
