@@ -4,7 +4,7 @@ authors: ["Ilias Garnier"]
 homepage: "https://github.com/igarnier/k-means"
 bug-reports: "https://github.com/igarnier/k-means/issues"
 dev-repo: "git+https://github.com/igarnier/k-means.git"
-license: "Apache-2.0"
+license: "MIT"
 build: [
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
