@@ -1,18 +1,18 @@
 opam-version: "1.2"
 maintainer: "ilias.gar@gmail.com"
 authors: ["Ilias Garnier"]
-homepage: "https://github.com/igarnier/k-means"
-bug-reports: "https://github.com/igarnier/k-means/issues"
-dev-repo: "git+https://github.com/igarnier/k-means.git"
+homepage: "https://github.com/igarnier/clustering"
+bug-reports: "https://github.com/igarnier/clustering/issues"
+dev-repo: "git+https://github.com/igarnier/clustering.git"
 license: "MIT"
 build: [
-  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["dune" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "jbuilder"                {build & >= "1.0+beta8"}
+  "dune"                {build}
   "batteries"
 ]
 available: [ ocaml-version >= "4.04.1" ]
 descr: "
-k-means clustering in OCaml
+k-means, k-medoids and agglomerative clustering in OCaml
 "

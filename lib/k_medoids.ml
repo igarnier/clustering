@@ -10,7 +10,7 @@ sig
   (* This should be a proper distance function (symmetric, zero on the diagonal,
      verifying the triangular inequality). *)
   val dist : t -> t -> float
-  
+
 end
 
 type init =
@@ -32,8 +32,6 @@ exception KmedoidsError of string
 
 module Make(E : Element) =
 struct
-
-  type elt = E.t
 
   (* Avoid polymorphic refs for efficiency (perhaps a case of premature optimization but well) *)
   type fref = {
@@ -57,7 +55,7 @@ struct
 
   (* Internal function to compute cost of a choice of medoids. *)
   let cost_ dist elements medoids =
-    Array.fold_lefti (fun acc i elt ->
+    Array.fold_lefti (fun acc _i elt ->
         let _, dist_to_closest = closest dist elt medoids in
         acc +. dist_to_closest
       ) 0.0 elements
@@ -129,7 +127,7 @@ struct
     let r = Random.float total in
     let rec loop i acc =
       if acc <= arr.(i) then
-        i 
+        i
       else
         loop (i+1) (acc -. arr.(i))
     in
@@ -140,7 +138,7 @@ struct
 
   let forgy_init k elements =
     Array.of_enum (Random.multi_choice k (Array.enum elements))
-  
+
   let rec kmedoidspp_iter dist k medoids elements =
     if k = 0 then medoids
     else
@@ -151,7 +149,7 @@ struct
       let i       = pick_proportional dists in
       let medoids = Array.concat [ medoids; [| elements.(i) |] ] in
       kmedoidspp_iter dist (k-1) medoids elements
-      
+
   let kmedoidspp_init dist k elements =
     if k < 1 then
       raise (KmedoidsError "kmedoidspp_init: k < 1, error")
@@ -165,7 +163,7 @@ struct
      destructively update [medoids] and [elements] until termination. *)
 
   let iterate_n dist elements medoids step n =
-    for i = 1 to n do
+    for _ = 1 to n do
       step dist elements medoids
     done
 
@@ -186,7 +184,7 @@ struct
     let cost = fref (cost_ dist elements medoids) in
     let exception Break in
     try
-      for i = 1 to n do
+      for _ = 1 to n do
         step dist elements medoids;
         let new_cost = cost_ dist elements medoids in
         let delta    = cost.c -. new_cost in
@@ -236,5 +234,5 @@ struct
     else
       fun ~k ~init ~algorithm ~termination ->
         k_medoids_internal E.dist elements k init algorithm termination
-  
+
 end

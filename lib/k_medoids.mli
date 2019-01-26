@@ -4,37 +4,39 @@ module type Element =
 sig
 
   (** [t] is the type of elements to be clustered. *)
-  type t   
+  type t
 
   (** [dist] should be a distance function: symmetric, zero and the diagonal and verifying
-     the triangular inequality.  *)
+      the triangular inequality.  *)
   val dist : t -> t -> float
-  
+
 end
 
 
 (** Initial choice of medoids.
-    This implementation provides several initialization algorithms, 
+    This implementation provides several initialization algorithms,
     the standard one being Kmedoids++, identical to Kmeans++ *)
 type init =
   [
-  (** [Forgy] selects k elements at random (without replacement) as initial centroids. *)
-  | `Forgy
+    | `Forgy
+    (** [Forgy] selects k elements at random (without replacement) as initial centroids. *)
 
-  (** [KmedoidsPP] selects initial medoids iteratively with probabilities proportional
-      to their distance to the previously selected centroids. This intuitively
-      allows to spread them well. *)
-  | `KmedoidsPP ]
+    | `KmedoidsPP
+    (** [KmedoidsPP] selects initial medoids iteratively with probabilities proportional
+        to their distance to the previously selected centroids. This intuitively
+        allows to spread them well. *)
+  ]
 
 (** Algorithm used to perform partitioning. *)
 type algorithm =
   [
-  (** [PAM] stands for Partition Around Medoids - the classical greedy algorithm. Costly. *)
-  | `PAM
+    | `PAM
+    (** [PAM] stands for Partition Around Medoids - the classical greedy algorithm. Costly. *)
 
-  (** Another heuristic, proceeding similarly to Lloyd's algorithm for Kmeans. Less costly
-      (but still more than Kmeans) but perhaps less precise. *)
-  | `VoronoiIteration ]
+    | `VoronoiIteration
+    (** Another heuristic, proceeding similarly to Lloyd's algorithm for Kmeans. Less costly
+        (but still more than Kmeans) but perhaps less precise. *)
+  ]
 
 (** See [K_means]. *)
 type termination =
@@ -45,7 +47,7 @@ and constraints = { max_iter : int; threshold : float }
 
 
 (** Exception thrown by [k_medoids] in case something goes awry.*)
-exception KmedoidsError of string  
+exception KmedoidsError of string
 
 module Make : functor (E : Element) ->
 sig
@@ -62,7 +64,7 @@ sig
      let res2 = cluster_function ~k:15 ~init:KmedoidsPP ~algorithm:VoronoiIteration ~threshold:0.1 in
      ...
   *)
-  
+
   (** [k_means] performs the clustering using the provided initialization method. *)
   val k_medoids : precompute:bool -> elements:E.t array -> k:int -> init:init -> algorithm:algorithm -> termination:termination -> E.t array array
 

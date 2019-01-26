@@ -36,8 +36,8 @@ struct
     | Node of cluster * cluster
     | Leaf
 
-  let uid  = 
-    let x = ref (-1) in 
+  let uid  =
+    let x = ref (-1) in
     fun () -> incr x; !x
 
   let mkcluster set tree =
@@ -47,14 +47,14 @@ struct
 
   (* Hash distance computation between clusters. *)
   module Table = Hashtbl.Make(
-    struct 
+    struct
       type t = (cluster * cluster)
-               
+
       let equal (c1,c2) (c1',c2') =
-           (c1.uid = c1'.uid && c2.uid = c2'.uid)
+        (c1.uid = c1'.uid && c2.uid = c2'.uid)
         || (c1.uid = c2'.uid && c2.uid = c1'.uid)
-        
-      let hash (c1,c2) = 
+
+      let hash (c1,c2) =
         if c1.uid < c2.uid then
           Hashtbl.hash (c1.uid, c2.uid)
         else
@@ -78,7 +78,7 @@ struct
     | []  -> invalid_arg "empty cluster list"
     | [c] ->
       (0.0, c, c)
-    | c :: c' :: tl_ ->
+    | c :: c' :: _tl ->
       List.fold_lefti (fun acc i c ->
           List.fold_lefti (fun acc j c' ->
               if j > i then
@@ -98,21 +98,21 @@ struct
     | []  -> invalid_arg "empty cluster list"
     | [c] -> c
     | _   ->
-      let (d, c, c') = minimum_pairwise_distance dist clusters in
+      let (_d, c, c') = minimum_pairwise_distance dist clusters in
       let clusters   = List.filter (fun c0 -> c0.uid <> c.uid && c0.uid <> c'.uid) clusters in
       let joined     = mkcluster (S.join c.set c'.set) (Node(c,c')) in
       iterate dist (joined :: clusters)
-        
+
   let cluster elements =
     let len  = List.length elements in
     let dist = dist len in
-    let clusters = 
+    let clusters =
       List.map (fun x -> mkcluster (S.singleton x) Leaf) elements
     in
     iterate dist clusters
 
   let truncate cluster depth =
-    let rec truncate { set; tree } depth queue acc =
+    let rec truncate { set; tree; _ } depth queue acc =
       match tree with
       | Leaf ->
         (if depth > 0 then
@@ -136,7 +136,7 @@ struct
     truncate cluster depth [] []
 
   let all_clusters cluster =
-    let rec fold { set; tree } depth acc =
+    let rec fold { set; tree; _ } depth acc =
       match tree with
       | Leaf -> (set, depth) :: acc
       | Node(l, r) ->

@@ -12,7 +12,7 @@ sig
   val dist : t -> t -> float
 
   val mean : t array -> t
-  
+
 end
 
 type init =
@@ -33,11 +33,6 @@ module Make(E : Element) =
 struct
 
   type elt = E.t
-
-  let max : float -> float -> float =
-    fun x y ->
-      if x > y then x
-      else y
 
   (* [closest elements centroid elti] returns the pair (m,d) such that
      [centroids.(m)] is closest to [elements.(elti)], and the distance
@@ -88,10 +83,10 @@ struct
       | `Min { max_iter; threshold } ->
         niter >= max_iter ||
         (let dist =
-          Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
-          |> Array.fsum
-        in
-        dist < threshold)
+           Array.mapi (fun i c -> E.dist c centroids'.(i)) centroids'
+           |> Array.fsum
+         in
+         dist < threshold)
     in
     if terminate then
       classes
@@ -130,14 +125,14 @@ struct
     let r = Random.float total in
     let rec loop i acc =
       if acc <= arr.(i) then
-        i 
+        i
       else
         loop (i+1) (acc -. arr.(i))
     in
     loop 0 r
 
   (* [kmeanspp_iter] selects [k] centroids iteratively: the first one is taken uniformly at
-     random, and in the inductive step the next one is picked with a probability proportional 
+     random, and in the inductive step the next one is picked with a probability proportional
      to its squared distance to the closest centroid.  *)
   let rec kmeanspp_iter k centroids elements =
     if k = 0 then centroids
@@ -146,7 +141,7 @@ struct
       let i     = pick_proportional dists in
       let centroids = Array.concat [ centroids; [| elements.(i) |] ] in
       kmeanspp_iter (k-1) centroids elements
-      
+
   let kmeanspp_init k elements =
     if k < 1 then
       raise (KmeansError "kmeanspp_init: k < 1, error")
@@ -155,7 +150,7 @@ struct
       kmeanspp_iter (k-1) [| elt |] elements
 
   let k_means_internal ~k ~(init : init) ~elements ~(termination : termination) =
-    let centroids = 
+    let centroids =
       match init with
       | `Forgy ->
         forgy_init k elements
@@ -165,7 +160,7 @@ struct
         kmeanspp_init k elements
     in
     iterate centroids elements 0 termination
-      
+
   let k_means ~k ~init ~elements ~termination =
     if Array.length elements = 0 then
       raise (KmeansError "k_means: empty elements array")
@@ -174,14 +169,14 @@ struct
       Array.map (Array.map (fun i -> elements.(i))) classes
 
   (* 2 x cluster_radius overapproximates the diameter, hopefully tightly *)
-  let cluster_radius elements =
-    let mean = E.mean elements in
-    Array.fold_left (fun maxdist elt ->
-        max maxdist (E.dist elt mean)
-      ) (~-. max_float) elements
-  
-  let sum_of_cluster_radius classes =
-    Array.fsum (Array.map cluster_radius classes)
+  (* let cluster_radius elements =
+   *   let mean = E.mean elements in
+   *   Array.fold_left (fun maxdist elt ->
+   *       max maxdist (E.dist elt mean)
+   *     ) (~-. max_float) elements *)
+
+  (* let sum_of_cluster_radius classes =
+   *   Array.fsum (Array.map cluster_radius classes) *)
 
   let total_squared_dist_to_mean elements =
     let mean = E.mean elements in
@@ -191,6 +186,6 @@ struct
       ) 0.0 elements
 
   let cost ~classes =
-    Array.fsum (Array.map total_squared_dist_to_mean classes)      
-  
+    Array.fsum (Array.map total_squared_dist_to_mean classes)
+
 end
