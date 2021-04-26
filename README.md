@@ -1,3 +1,8 @@
+Deprecation notice
+##################
+
+NB: this library is deprecated by https://github.com/igarnier/prbnmcn-clustering
+
 Functorial k-clustering implementation in OCaml.
 
 Provided algorithms:
